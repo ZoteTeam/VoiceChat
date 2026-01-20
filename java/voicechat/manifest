@@ -1,0 +1,9 @@
+{
+	"source-dirs": [
+		"src"
+	],
+	"library-dirs": [],
+	"boot-classes": [
+		"com.reider745.voicechat.Voice"
+	]
+}

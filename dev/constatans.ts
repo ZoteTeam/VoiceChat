@@ -1,0 +1,5 @@
+const RATE = 44100;
+const CHANNEL_IN = AudioFormat.CHANNEL_IN_MONO;
+const CHANNEL_OUT = AudioFormat.CHANNEL_OUT_MONO;
+const AUDIO_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
+const BUFFER_SIZE = AudioRecord.getMinBufferSize(RATE, CHANNEL_IN, AUDIO_ENCODING);

@@ -1,0 +1,6 @@
+.idea
+output
+tsconfig.json
+*.log
+*.icmod
+build

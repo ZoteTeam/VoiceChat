@@ -1,0 +1,30 @@
+plugins {
+	id "com.github.johnrengelman.shadow" version "5.2.0"
+	id "java"
+}
+
+repositories {
+    mavenCentral()
+
+	maven {
+		name "innerCoreReposiliteReleases"
+		url "https://maven.inner-core.org/releases"
+	}
+}
+
+dependencies {
+	compileOnly 'org.mozilla:rhino:1.7.14'
+    compileOnly(files("lib/android.jar", "lib/innercore-test.jar", "lib/horizon-1.2.jar"))
+}
+
+sourceSets {
+	main {
+		java {
+			srcDirs = ["src"]
+			buildDir = "../../build/classes/${project.name}"
+		}
+		resources {
+			srcDirs = []
+		}
+	}
+}

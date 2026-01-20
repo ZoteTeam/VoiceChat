@@ -1,0 +1,41 @@
+{
+	"$schema": "../schemas/make.schema.json",
+	"info": {
+		"name": "VoiceChat",
+		"description": "Voice chat mod",
+		"author": "Reider745",
+		"version": "1.0",
+		"icon": "mod_icon.png",
+		"clientOnly": true
+	},
+	"api": "CoreEngine",
+	"gradle": {
+		"build": "build"
+	},
+	"java": {
+		"configurable": true
+	},
+	"declarations": [
+		"declarations/android.d.ts"
+	],
+	"resources": [],
+	"sources": [
+		{
+			"source": "launcher.js",
+			"type": "launcher",
+			"language": "javascript"
+		},
+		{
+			"source": "dev",
+			"type": "main",
+			"target": "main.js"
+		}
+	],
+	"compile": [
+		{
+			"source": "java/*",
+			"type": "java"
+		}
+	],
+	"additional": []
+}
