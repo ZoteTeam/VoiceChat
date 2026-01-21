@@ -29,13 +29,35 @@
 			"source": "dev",
 			"type": "main",
 			"target": "main.js"
+		},
+		{
+			"source": "preloader.js",
+			"type": "preloader",
+			"language": "javascript"
 		}
 	],
 	"compile": [
+		{
+			"source": "native/*",
+			"type": "native"
+		},
 		{
 			"source": "java/*",
 			"type": "java"
 		}
 	],
-	"additional": []
+	"native": {
+		"options": [],
+		"configurations": {
+			"arm64": {
+				"options": ["-std=c99", "-DARM64=1"]
+			}
+		}
+	},
+	"additional": [
+		{
+			"source": "assets/weights_blob_small.bin",
+			"targetDir": "."
+		}
+	]
 }

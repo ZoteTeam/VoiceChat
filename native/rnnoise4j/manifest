@@ -1,0 +1,9 @@
+{
+    "shared": {
+        "name": "rnnoise4j",
+		"include": ["include"]
+    },
+    "depends": [
+    	"innercore"
+	]
+}

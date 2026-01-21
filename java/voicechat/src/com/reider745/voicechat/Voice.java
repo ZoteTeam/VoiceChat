@@ -22,7 +22,17 @@ import org.mozilla.javascript.Scriptable;
 import java.util.HashMap;
 
 public class Voice {
+    public static String dirMod;
+
     public static void boot(HashMap<?, ?> options) {
+        Callback.invokeAPICallback("VoiceModBoot", options);
+
+        dirMod = (String) options.get("dirMod");
+
+        if(dirMod == null) {
+            throw new IllegalArgumentException("Missing required parameter 'dirMod'");
+        }
+
         while (ContextCompat.checkSelfPermission(AdaptedScriptAPI.UI.getContext(), Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(AdaptedScriptAPI.UI.getContext(), new String[] {Manifest.permission.RECORD_AUDIO}, 200);
             try {

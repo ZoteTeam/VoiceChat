@@ -7,12 +7,11 @@ import com.reider745.voicechat.data.HandlerSound;
 import com.reider745.voicechat.service.MicService;
 import com.zhekasmirnov.horizon.runtime.logger.Logger;
 import de.maxhenkel.rnnoise4j.Denoiser;
-import de.maxhenkel.rnnoise4j.UnknownPlatformException;
 
 import java.io.IOException;
 
 public class MicAndroidApiServiceImpl implements MicService {
-    //private final Denoiser denoiser;
+    private final Denoiser denoiser;
     private final AudioRecord recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, Constants.RATE, Constants.CHANNEL_IN, Constants.AUDIO_ENCODING, Constants.BUFFER_SIZE);
     private HandlerSound listener = (buff, length) -> {};
     private boolean record = false;
@@ -20,7 +19,7 @@ public class MicAndroidApiServiceImpl implements MicService {
     public MicAndroidApiServiceImpl() {
         try {
             this.denoiser = new Denoiser();
-        } catch (IOException | UnknownPlatformException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
@@ -43,7 +42,7 @@ public class MicAndroidApiServiceImpl implements MicService {
             while (this.record) {
                 int bytesRead = this.recorder.read(buffer, 0, Constants.BUFFER_SIZE);
                 if (bytesRead > 0) {
-                    this.listener.apply(buffer, bytesRead);
+                    this.listener.apply(denoiser.denoise(buffer), bytesRead);
                 } else if (bytesRead == AudioRecord.ERROR_INVALID_OPERATION) {
                     Logger.error("VoiceMod", "ERROR_INVALID_OPERATION: Check recorder state");
                 } else if (bytesRead == AudioRecord.ERROR_BAD_VALUE) {
@@ -55,7 +54,7 @@ public class MicAndroidApiServiceImpl implements MicService {
                 }
 
                 try {
-                    Thread.sleep(10);
+                    Thread.sleep(50);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
