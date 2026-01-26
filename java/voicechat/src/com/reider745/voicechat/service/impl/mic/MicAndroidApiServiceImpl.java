@@ -6,6 +6,7 @@ import com.reider745.voicechat.data.Constants;
 import com.reider745.voicechat.data.HandlerSound;
 import com.reider745.voicechat.service.MicService;
 import com.zhekasmirnov.horizon.runtime.logger.Logger;
+import com.zhekasmirnov.innercore.api.log.ICLog;
 import de.maxhenkel.rnnoise4j.Denoiser;
 
 import java.io.IOException;
@@ -36,7 +37,11 @@ public class MicAndroidApiServiceImpl implements MicService {
         Thread thread = new Thread(() -> {
             final short[] buffer = new short[Constants.BUFFER_SIZE];
 
-            this.recorder.startRecording();
+            try {
+                this.recorder.startRecording();
+            } catch (Throwable t) {
+                Logger.error("VoiceMod", ICLog.getStackTrace(t));
+            }
             this.record = true;
 
             while (this.record) {

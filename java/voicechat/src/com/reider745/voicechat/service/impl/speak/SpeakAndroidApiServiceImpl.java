@@ -6,7 +6,7 @@ import com.reider745.voicechat.data.Constants;
 import com.reider745.voicechat.service.SpeakService;
 
 public class SpeakAndroidApiServiceImpl implements SpeakService {
-    private final AudioTrack track = new AudioTrack(AudioManager.STREAM_MUSIC, Constants.RATE, Constants.CHANNEL_OUT, Constants.AUDIO_ENCODING, Constants.BUFFER_SIZE, AudioTrack.MODE_STREAM);
+    private final AudioTrack track = new AudioTrack(AudioManager.STREAM_VOICE_CALL, Constants.RATE, Constants.CHANNEL_OUT, Constants.AUDIO_ENCODING, Constants.BUFFER_SIZE, AudioTrack.MODE_STREAM);
 
     public SpeakAndroidApiServiceImpl() {
         track.play();

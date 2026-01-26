@@ -52,6 +52,12 @@ public class NetworkInnerCoreServiceImpl implements NetworkService {
         this.serverHandler = listener;
     }
 
+    @Override
+    public void startServer() {}
+
+    @Override
+    public void stop() {}
+
     private byte[] compress(short[] data) {
         final ByteBuffer buffer = ByteBuffer.allocate(data.length * 2);
 

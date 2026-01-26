@@ -9,9 +9,11 @@ import com.reider745.voicechat.service.NetworkService;
 import com.reider745.voicechat.service.SpeakService;
 import com.reider745.voicechat.service.impl.mic.MicAndroidApiServiceImpl;
 import com.reider745.voicechat.service.impl.network.NetworkInnerCoreServiceImpl;
+import com.reider745.voicechat.service.impl.network.NetworkSocketServiceImpl;
 import com.reider745.voicechat.service.impl.speak.SpeakAndroidApiServiceImpl;
 import com.zhekasmirnov.apparatus.multiplayer.Network;
 import com.zhekasmirnov.apparatus.multiplayer.server.ConnectedClient;
+import com.zhekasmirnov.horizon.runtime.logger.Logger;
 import com.zhekasmirnov.innercore.api.NativeAPI;
 import com.zhekasmirnov.innercore.api.mod.adaptedscript.AdaptedScriptAPI;
 import com.zhekasmirnov.innercore.api.mod.util.ScriptableFunctionImpl;
@@ -19,6 +21,7 @@ import com.zhekasmirnov.innercore.api.runtime.Callback;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class Voice {
@@ -50,7 +53,7 @@ public class Voice {
     private double distance;
 
     public Voice() {
-        this(new MicAndroidApiServiceImpl(), new SpeakAndroidApiServiceImpl(), new NetworkInnerCoreServiceImpl());
+        this(new MicAndroidApiServiceImpl(), new SpeakAndroidApiServiceImpl(), new NetworkSocketServiceImpl("127.0.0.1", Network.getSingleton().getConfig().getDefaultPort() + 1));
     }
 
     public Voice(MicService micService, SpeakService speakService, NetworkService networkService) {
@@ -71,6 +74,15 @@ public class Voice {
             @Override
             public Object call(Context context, Scriptable scriptable, Scriptable scriptable1, Object[] objects) {
                 micService.stop();
+                networkService.stop();
+                return null;
+            }
+        }, 0);
+
+        Callback.addCallback("ServerLevelPreLoaded", new ScriptableFunctionImpl() {
+            @Override
+            public Object call(Context context, Scriptable scriptable, Scriptable scriptable1, Object[] objects) {
+                networkService.startServer();
                 return null;
             }
         }, 0);

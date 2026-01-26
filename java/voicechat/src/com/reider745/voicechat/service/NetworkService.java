@@ -12,4 +12,8 @@ public interface NetworkService {
     void setClientHandler(HandlerSound listener);
 
     void setServerHandler(HandlerSoundServer listener);
+
+    void startServer();
+
+    void stop();
 }
