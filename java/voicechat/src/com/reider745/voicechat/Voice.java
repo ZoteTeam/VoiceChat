@@ -5,15 +5,15 @@ import android.content.pm.PackageManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import com.reider745.voicechat.service.MicService;
-import com.reider745.voicechat.service.NetworkService;
 import com.reider745.voicechat.service.SpeakService;
 import com.reider745.voicechat.service.impl.mic.MicAndroidApiServiceImpl;
-import com.reider745.voicechat.service.impl.network.NetworkInnerCoreServiceImpl;
-import com.reider745.voicechat.service.impl.network.NetworkSocketServiceImpl;
 import com.reider745.voicechat.service.impl.speak.SpeakAndroidApiServiceImpl;
+import com.reider745.voicechat.service.network.ClientNetworkService;
+import com.reider745.voicechat.service.network.ServerNetworkService;
+import com.reider745.voicechat.service.network.impl.SocketClientNetworkServiceImpl;
+import com.reider745.voicechat.service.network.impl.SocketServerNetworkServiceImpl;
 import com.zhekasmirnov.apparatus.multiplayer.Network;
 import com.zhekasmirnov.apparatus.multiplayer.server.ConnectedClient;
-import com.zhekasmirnov.horizon.runtime.logger.Logger;
 import com.zhekasmirnov.innercore.api.NativeAPI;
 import com.zhekasmirnov.innercore.api.mod.adaptedscript.AdaptedScriptAPI;
 import com.zhekasmirnov.innercore.api.mod.util.ScriptableFunctionImpl;
@@ -21,7 +21,6 @@ import com.zhekasmirnov.innercore.api.runtime.Callback;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 
-import java.util.Arrays;
 import java.util.HashMap;
 
 public class Voice {
@@ -48,16 +47,23 @@ public class Voice {
 
     private MicService micService;
     private SpeakService speakService;
-    private NetworkService networkService;
+    private ClientNetworkService clientNetworkService;
+    private ServerNetworkService serverNetworkService;
 
     private double distance;
 
     public Voice() {
-        this(new MicAndroidApiServiceImpl(), new SpeakAndroidApiServiceImpl(), new NetworkSocketServiceImpl("127.0.0.1", Network.getSingleton().getConfig().getDefaultPort() + 1));
+        this(new MicAndroidApiServiceImpl(), new SpeakAndroidApiServiceImpl(),
+                new SocketClientNetworkServiceImpl(),
+                new SocketServerNetworkServiceImpl("127.0.0.1", Network.getSingleton().getConfig().getDefaultPort())
+        );
+
+        Network.getSingleton().getConfig().setSocketConnectionAllowed(false);
     }
 
-    public Voice(MicService micService, SpeakService speakService, NetworkService networkService) {
-        this.networkService = networkService;
+    public Voice(MicService micService, SpeakService speakService, ClientNetworkService clientNetworkService, ServerNetworkService serverNetworkService) {
+        this.clientNetworkService = clientNetworkService;
+        this.serverNetworkService = serverNetworkService;
 
         this.setSpeakService(speakService);
         this.setMicService(micService);
@@ -74,7 +80,15 @@ public class Voice {
             @Override
             public Object call(Context context, Scriptable scriptable, Scriptable scriptable1, Object[] objects) {
                 micService.stop();
-                networkService.stop();
+                clientNetworkService.stop();
+                return null;
+            }
+        }, 0);
+
+        Callback.addCallback("ServerLevelLeft", new ScriptableFunctionImpl() {
+            @Override
+            public Object call(Context context, Scriptable scriptable, Scriptable scriptable1, Object[] objects) {
+                serverNetworkService.stop();
                 return null;
             }
         }, 0);
@@ -82,16 +96,16 @@ public class Voice {
         Callback.addCallback("ServerLevelPreLoaded", new ScriptableFunctionImpl() {
             @Override
             public Object call(Context context, Scriptable scriptable, Scriptable scriptable1, Object[] objects) {
-                networkService.startServer();
+                serverNetworkService.start();
                 return null;
             }
         }, 0);
     }
 
     private void updateNetwork() {
-        micService.setListener(((buff, length) -> networkService.sendToServer(buff, length)));
+        micService.setListener(((buff, length) -> clientNetworkService.sendToServer(buff, length)));
 
-        networkService.setServerHandler(((client, buff, length) -> {
+        serverNetworkService.setHandler(((client, buff, length) -> {
             for(ConnectedClient speakClient : Network.getSingleton().getServer().getConnectedClients()) {
                 float[] pos1 = new float[3];
                 float[] pos2 = new float[3];
@@ -100,12 +114,12 @@ public class Voice {
                 NativeAPI.getPosition(client.getPlayerUid(), pos2);
 
                 if(/*speakClient != client && */Math.sqrt(Math.pow(pos1[0] - pos2[0], 2) + Math.pow(pos1[1] - pos2[1], 2) + Math.pow(pos1[2] - pos2[2], 2)) <= this.distance) {
-                    networkService.sendToClient(speakClient, buff, length);
+                    serverNetworkService.sendToClient(speakClient, buff, length);
                 }
             }
         }));
 
-        networkService.setClientHandler(((buff, length) -> speakService.play(buff, length)));
+        clientNetworkService.setHandler(((buff, length) -> speakService.play(buff, length)));
     }
 
     public void setMicService(MicService micService) {
@@ -119,8 +133,9 @@ public class Voice {
         updateNetwork();
     }
 
-    public void setNetworkService(NetworkService networkService) {
-        this.networkService = networkService;
+    public void setNetworkService(ClientNetworkService networkService, ServerNetworkService serverNetworkService) {
+        this.clientNetworkService = networkService;
+        this.serverNetworkService = serverNetworkService;
 
         updateNetwork();
     }
@@ -145,7 +160,11 @@ public class Voice {
         return speakService;
     }
 
-    public NetworkService getNetworkService() {
-        return networkService;
+    public ClientNetworkService getClientNetworkService() {
+        return clientNetworkService;
+    }
+
+    public ServerNetworkService getServerNetworkService() {
+        return serverNetworkService;
     }
 }

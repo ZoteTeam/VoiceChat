@@ -1,5 +1,5 @@
 package com.reider745.voicechat.service;
 
 public interface SpeakService {
-    void play(short[] buff, int length);
+    void play(byte[] buff, int length);
 }
