@@ -2,6 +2,7 @@ package com.reider745.voicechat.service.impl.mic;
 
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
+import android.media.audiofx.AcousticEchoCanceler;
 import com.reider745.voicechat.data.Constants;
 import com.reider745.voicechat.data.HandlerSound;
 import com.reider745.voicechat.service.MicService;
@@ -16,6 +17,7 @@ public class MicAndroidApiServiceImpl implements MicService {
     private final AudioRecord recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, Constants.RATE, Constants.CHANNEL_IN, Constants.AUDIO_ENCODING, Constants.BUFFER_SIZE);
     private HandlerSound listener = (buff, length) -> {};
     private boolean record = false;
+    private AcousticEchoCanceler echoCanceler;
 
     public MicAndroidApiServiceImpl() {
         try {
@@ -34,14 +36,32 @@ public class MicAndroidApiServiceImpl implements MicService {
     public void start() {
         if(this.record) throw new RuntimeException("Record enabled");
 
+        final short[] buffer = new short[Constants.BUFFER_SIZE];
         Thread thread = new Thread(() -> {
-            final short[] buffer = new short[Constants.BUFFER_SIZE];
-
             try {
-                this.recorder.startRecording();
+                if (!AcousticEchoCanceler.isAvailable()) {
+                    Logger.error("VoiceMod", "Acoustic Echo Canceler is not available on this device.");
+                    return;
+                }
+
+                int audioSessionId = recorder.getAudioSessionId();
+                if (audioSessionId == 0) {
+                    Logger.error("VoiceMod", "Invalid audio session ID for AEC.");
+                    return;
+                }
+
+                echoCanceler = AcousticEchoCanceler.create(audioSessionId);
+                if (echoCanceler != null) {
+                    echoCanceler.setEnabled(true);
+                    Logger.debug("VoiceMod", "Acoustic Echo Canceler enabled for session: " + audioSessionId);
+                } else {
+                    Logger.error("VoiceMod", "Failed to create Acoustic Echo Canceler.");
+                }
             } catch (Throwable t) {
                 Logger.error("VoiceMod", ICLog.getStackTrace(t));
             }
+
+            this.recorder.startRecording();
             this.record = true;
 
             while (this.record) {
@@ -57,12 +77,12 @@ public class MicAndroidApiServiceImpl implements MicService {
                     Logger.error("VoiceMod", "ERROR_DEAD_OBJECT: AudioRecord is not valid");
                     break;
                 }
+            }
 
-                try {
-                    Thread.sleep(50);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
+            if(echoCanceler != null) {
+                echoCanceler.setEnabled(false);
+                echoCanceler.release();
+                echoCanceler = null;
             }
 
             this.recorder.stop();

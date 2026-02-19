@@ -32,45 +32,44 @@ public class SocketClientNetworkServiceImpl implements ClientNetworkService {
                     }
                 }
 
-                Logger.info("VoiceMod", "New socket request connection " + remoteHost + ":" + meta);
-
-                try {
-                    final Socket socket = new Socket(remoteHost, Integer.parseInt(meta));
-                    final DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-                    final DataInputStream in = new DataInputStream(socket.getInputStream());
-
-                    out.writeLong(Network.getSingleton().getClient().getPlayerUid());
-                    out.flush();
-
-                    this.clientVoice = new SocketClientVoice(socket, in, out);
-
-                    final Thread thread = new Thread(() -> {
-                        while(clientVoice != null) {
-                            try {
-                                int length = in.available();
-                                if (length > 0){
-                                    byte[] buff = new byte[length];
-                                    in.readFully(buff);
-                                    handler.apply(buff, buff.length);
-                                }
-                            } catch (Exception e) {
-                                throw new RuntimeException(e);
-                            }
-                            try {
-                                Thread.sleep(1L);
-                            } catch (InterruptedException e) {
-                                throw new RuntimeException(e);
-                            }
-                        }
-                    });
-                    thread.setName("voice-speak");
-                    thread.start();
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
+                connect(remoteHost, Integer.parseInt(meta));
             }
         });
 
+    }
+
+    public void connect(String host, int port) {
+        Logger.info("VoiceMod", "New socket request connection " + host + ":" + port);
+
+        try {
+            final Socket socket = new Socket(host, port);
+            final DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+            final DataInputStream in = new DataInputStream(socket.getInputStream());
+
+            out.writeLong(Network.getSingleton().getClient().getPlayerUid());
+            out.flush();
+
+            this.clientVoice = new SocketClientVoice(socket, in, out);
+
+            final Thread thread = new Thread(() -> {
+                while(clientVoice != null) {
+                    try {
+                        final byte[] bytes = clientVoice.handleClient();
+                        if (bytes.length > 0) {
+                            handler.apply(bytes, bytes.length);
+                        }
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    Thread.yield();
+                }
+            });
+            thread.setName("voice-speak");
+            thread.start();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

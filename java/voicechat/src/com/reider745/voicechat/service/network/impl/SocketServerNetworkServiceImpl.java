@@ -79,11 +79,14 @@ public class SocketServerNetworkServiceImpl implements ServerNetworkService {
                                 try {
                                     while(is.available() <= 0) {Thread.yield();}
 
-                                    ConnectedClient client = ADAPTER.getClientForPlayer(is.readLong());
+                                    long playerUid = is.readLong();
+                                    ConnectedClient client = ADAPTER.getClientForPlayer(playerUid);
 
                                     if(client != null) {
                                         ICLog.i("VoiceMod", "new connected client: " + client.getPlayerUid());
                                         this.connectedClients.put(client, new SocketClientVoice(socket, is, io));
+                                    } else {
+                                        ICLog.i("VoiceMod", "new error connected  client: " + playerUid);
                                     }
                                 } catch (Exception e) {
                                     throw new RuntimeException(e);
@@ -101,17 +104,13 @@ public class SocketServerNetworkServiceImpl implements ServerNetworkService {
             thread = new Thread(() -> {
                 while (this.serverSocket != null) {
                     connectedClients.forEach((client, voice) -> {
-                        byte[] bytes = voice.handle();
+                        byte[] bytes = voice.handleServer();
                         if(bytes.length > 0) {
                             handler.apply(client, bytes, bytes.length);
                         }
                     });
 
-                    try {
-                        Thread.sleep(5L);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
+                    Thread.yield();
                 }
 
             });
