@@ -14,7 +14,7 @@ import java.io.IOException;
 
 public class MicAndroidApiServiceImpl implements MicService {
     private final Denoiser denoiser;
-    private final AudioRecord recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, Constants.RATE, Constants.CHANNEL_IN, Constants.AUDIO_ENCODING, Constants.BUFFER_SIZE);
+    private final AudioRecord recorder = new AudioRecord(MediaRecorder.AudioSource.VOICE_COMMUNICATION, Constants.RATE, Constants.CHANNEL_IN, Constants.AUDIO_ENCODING, Constants.BUFFER_SIZE);
     private HandlerSound listener = (buff, length) -> {};
     private boolean record = false;
     private AcousticEchoCanceler echoCanceler;
@@ -38,6 +38,8 @@ public class MicAndroidApiServiceImpl implements MicService {
 
         final short[] buffer = new short[Constants.BUFFER_SIZE];
         Thread thread = new Thread(() -> {
+            this.recorder.startRecording();
+
             try {
                 if (!AcousticEchoCanceler.isAvailable()) {
                     Logger.error("VoiceMod", "Acoustic Echo Canceler is not available on this device.");
@@ -61,7 +63,6 @@ public class MicAndroidApiServiceImpl implements MicService {
                 Logger.error("VoiceMod", ICLog.getStackTrace(t));
             }
 
-            this.recorder.startRecording();
             this.record = true;
 
             while (this.record) {

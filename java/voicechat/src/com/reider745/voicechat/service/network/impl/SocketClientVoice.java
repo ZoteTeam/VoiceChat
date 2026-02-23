@@ -1,7 +1,5 @@
 package com.reider745.voicechat.service.network.impl;
 
-import com.zhekasmirnov.horizon.runtime.logger.Logger;
-
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -24,7 +22,6 @@ public class SocketClientVoice {
         try {
             int length = inputStream.readInt();
             if(length > 0) {
-                Logger.info("Received data from client: " + length);
                 byte[] bytes = new byte[length];
                 inputStream.readFully(bytes, 0, length);
                 return bytes;

@@ -113,7 +113,7 @@ public class Voice {
                 NativeAPI.getPosition(speakClient.getPlayerUid(), pos1);
                 NativeAPI.getPosition(client.getPlayerUid(), pos2);
 
-                if(/*speakClient != client && */Math.sqrt(Math.pow(pos1[0] - pos2[0], 2) + Math.pow(pos1[1] - pos2[1], 2) + Math.pow(pos1[2] - pos2[2], 2)) <= this.distance) {
+                if(speakClient != client && Math.sqrt(Math.pow(pos1[0] - pos2[0], 2) + Math.pow(pos1[1] - pos2[1], 2) + Math.pow(pos1[2] - pos2[2], 2)) <= this.distance) {
                     serverNetworkService.sendToClient(speakClient, buff, length);
                 }
             }
