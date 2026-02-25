@@ -35,6 +35,9 @@ public class Voice {
             throw new IllegalArgumentException("Missing required parameter 'dirMod'");
         }
 
+        if(AdaptedScriptAPI.isDedicatedServer())
+            return;
+
         while (ContextCompat.checkSelfPermission(AdaptedScriptAPI.UI.getContext(), Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(AdaptedScriptAPI.UI.getContext(), new String[] {Manifest.permission.RECORD_AUDIO}, 200);
             try {
@@ -55,7 +58,7 @@ public class Voice {
     public Voice() {
         this(new MicAndroidApiServiceImpl(), new SpeakAndroidApiServiceImpl(),
                 new SocketClientNetworkServiceImpl(),
-                new SocketServerNetworkServiceImpl("127.0.0.1", Network.getSingleton().getConfig().getDefaultPort())
+                new SocketServerNetworkServiceImpl("0.0.0.0", Network.getSingleton().getConfig().getDefaultPort())
         );
 
         Network.getSingleton().getConfig().setSocketConnectionAllowed(false);

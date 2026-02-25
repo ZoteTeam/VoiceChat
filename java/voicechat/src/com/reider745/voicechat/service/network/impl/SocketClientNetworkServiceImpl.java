@@ -24,7 +24,7 @@ public class SocketClientNetworkServiceImpl implements ClientNetworkService {
 
             if(data instanceof CharSequence) {
                 String remoteHost = data.toString();
-                if(remoteHost.equals("127.0.0.1")) {
+                if(remoteHost.equals("127.0.0.1") || remoteHost.equals("0.0.0.0")) {
                     remoteHost = NativeCallback.getStringParam("host");
 
                     if(remoteHost.isEmpty()) {
