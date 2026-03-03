@@ -1,5 +1,8 @@
 package com.reider745.voicechat.service.network.impl;
 
+import androidx.annotation.Nullable;
+import com.reider745.voicechat.data.VoiceEntry;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -8,7 +11,7 @@ import java.net.Socket;
 public class SocketClientVoice {
     private static final byte[] EMPTY = new byte[0];
 
-    private Socket socket;
+    private final Socket socket;
     private final DataInputStream inputStream;
     private final DataOutputStream outputStream;
 
@@ -32,34 +35,44 @@ public class SocketClientVoice {
         }
     }
 
-    public byte[] handleClient() {
+    @Nullable
+    public VoiceEntry handleClient() {
         try {
             if(inputStream.available() == 0) {
-                return EMPTY;
+                return null;
             }
 
             int length = inputStream.readInt();
+            String username = inputStream.readUTF();
+
+            // Ограничение на количество байт которые клиент может принять
+            if(length > Short.MAX_VALUE) {
+                inputStream.skipBytes(Short.MAX_VALUE);
+                return null;
+            }
+
             if (length > 0){
                 byte[] buff = new byte[length];
                 inputStream.readFully(buff);
-                return buff;
+                return new VoiceEntry(username, buff);
             }
 
-            return EMPTY;
+            return null;
         } catch (IOException e) {
-            return EMPTY;
+            return null;
         }
     }
 
-    public void send(byte[] buff, int length) {
+    public void sendToClient(String username, byte[] buff, int length) {
         try {
             outputStream.writeInt(length);
+            outputStream.writeUTF(username);
             outputStream.write(buff, 0, length);
             outputStream.flush();
         } catch (IOException ignored) {}
     }
 
-    public void send(short[] buff, int length) {
+    public void sendToServer(short[] buff, int length) {
         try {
             if(length <= 0) {
                 return;

@@ -1,5 +1,6 @@
 package com.reider745.voicechat.service.network;
 
+import com.reider745.voicechat.config.ServerConfig;
 import com.reider745.voicechat.data.HandlerSoundServer;
 import com.zhekasmirnov.apparatus.multiplayer.server.ConnectedClient;
 
@@ -8,7 +9,7 @@ public interface ServerNetworkService {
 
     void setHandler(HandlerSoundServer listener);
 
-    void start();
+    void start(ServerConfig config);
 
     void stop();
 }

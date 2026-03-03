@@ -1,12 +1,13 @@
 package com.reider745.voicechat.service.network.impl;
 
+import com.reider745.voicechat.config.ClientConfig;
+import com.reider745.voicechat.config.ServerConfig;
 import com.reider745.voicechat.data.HandlerSoundServer;
 import com.reider745.voicechat.service.network.ServerNetworkService;
 import com.zhekasmirnov.apparatus.multiplayer.Network;
-import com.zhekasmirnov.apparatus.multiplayer.NetworkJsAdapter;
 import com.zhekasmirnov.apparatus.multiplayer.server.ConnectedClient;
+import com.zhekasmirnov.innercore.api.NativeAPI;
 import com.zhekasmirnov.innercore.api.log.ICLog;
-import com.zhekasmirnov.innercore.api.mod.adaptedscript.AdaptedScriptAPI;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -20,29 +21,19 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class SocketServerNetworkServiceImpl implements ServerNetworkService {
-    private static final NetworkJsAdapter ADAPTER = AdaptedScriptAPI.MCSystem.getNetwork();
     private static final ExecutorService executor = Executors.newFixedThreadPool(2);
 
-    private final String host;
-    private final int port;
     private final Map<ConnectedClient, SocketClientVoice> connectedClients = new ConcurrentHashMap<>();
 
     private ServerSocket serverSocket;
     private HandlerSoundServer handler = (client, buff, length) -> {};
 
-    public SocketServerNetworkServiceImpl(String host, int port) {
-        this.host = host;
-        this.port = port;
-
+    public SocketServerNetworkServiceImpl() {
         Network.getSingleton().getServer().addOnClientDisconnectedListener((client, disconnected) -> {
             SocketClientVoice clientVoice = connectedClients.remove(client);
             if(clientVoice != null) {
                 clientVoice.close();
             }
-        });
-
-        Network.getSingleton().getServer().addOnClientConnectedListener((client) -> {
-            client.send("voice.request#" + port, host);
         });
     }
 
@@ -52,7 +43,8 @@ public class SocketServerNetworkServiceImpl implements ServerNetworkService {
 
         final SocketClientVoice clientVoice = connectedClients.get(client);
         if(clientVoice != null) {
-            clientVoice.send(buff, length);
+            // TODO: не надежный способ получения ника игрока, при первой-же возможности переделать
+            clientVoice.sendToClient(NativeAPI.getNameTag(client.getPlayerUid()), buff, length);
         }
     }
 
@@ -62,9 +54,19 @@ public class SocketServerNetworkServiceImpl implements ServerNetworkService {
     }
 
     @Override
-    public void start() {
+    public void start(ServerConfig config) {
         try {
-            this.serverSocket = new ServerSocket(port, 50, InetAddress.getByName(host));
+            final String json = ClientConfig.from(config).toString();
+
+            for(ConnectedClient client : Network.getSingleton().getServer().getConnectedClients()) {
+                client.send("voice.request", json);
+            }
+
+            Network.getSingleton().getServer().addOnClientConnectedListener((client) -> {
+                client.send("voice.request", json);
+            });
+
+            this.serverSocket = new ServerSocket(config.getPort(), 50, InetAddress.getByName(config.getHost()));
 
             Thread thread = new Thread(() -> {
                 while (this.serverSocket != null) {
@@ -80,7 +82,7 @@ public class SocketServerNetworkServiceImpl implements ServerNetworkService {
                                     while(is.available() <= 0) {Thread.yield();}
 
                                     long playerUid = is.readLong();
-                                    ConnectedClient client = ADAPTER.getClientForPlayer(playerUid);
+                                    ConnectedClient client = Network.getSingleton().getServer().getConnectedClientForPlayer(playerUid);
 
                                     if(client != null) {
                                         ICLog.i("VoiceMod", "new connected client: " + client.getPlayerUid());

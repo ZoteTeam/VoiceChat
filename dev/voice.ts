@@ -1,75 +1,43 @@
-/*namespace Voice {
-    let MIC: MicService;
-    let SPEAK: SpeakService;
-    let NETWORK: NetworkService = new NetworkInnerCoreServiceImpl();
+/* declare class DeclServerConfig {
 
-    export function setMic(mic: MicService): void {
-        if(MIC != null && MIC.isRecording()) {
-            MIC.stop();
-            mic.start();
-        }
-
-        MIC = mic;
-
-        updateNetwork();
-    }
-
-    export function setSpeak(speak: SpeakService): void {
-        SPEAK = speak;
-    }
-
-    function updateNetwork(): void {
-        MIC.setListener((buff, length) => {
-            NETWORK.sendToServer(buff, length);
-        });
-
-        NETWORK.setServerHandler((client, buff, length) => {
-            const clients = Network.getConnectedClients();
-
-            for(const i in clients) {
-                const speakClient = clients[i];
-
-                if(speakClient != client && Entity.getDistanceToEntity(speakClient.getPlayerUid(), client.getPlayerUid()) <= __config__.getDouble("distance")) {
-                    NETWORK.sendToClient(speakClient, buff, length);
-                }
-            }
-        });
-
-        NETWORK.setClientHandler((buff, length) => {
-            SPEAK.play(buff, length);
-        });
-    }
-
-    export function setNetwork(network: NetworkService): void {
-        NETWORK = network;
-
-        updateNetwork();
-    }
-
-    setSpeak(new SpeakAndroidApiServiceImpl());
-    setMic(new MicAndroidApiServiceImpl());
-
-    export function getMic(): MicService {
-        return MIC;
-    }
-
-    export function getSpeak(): SpeakService {
-        return SPEAK;
-    }
-
-    export function getNetwork(): NetworkService {
-        return NETWORK;
-    }
+}
 
 
-    Callback.addCallback("LevelDisplayed", () => {
-        MIC.start();
-    });
 
-    Callback.addCallback("LocalLevelLeft", () => {
-        MIC.stop();
-    });
-}*/
+declare class DeclSocketServerNetworkServiceImpl {
+    constructor();
+}
 
-const Voice = new (WRAP_JAVA("com.reider745.voicechat.Voice"))();
-Voice.setDistance(__config__.getDouble("distance"));
+declare class DeclSocketClientNetworkServiceImpl {
+    constructor();
+}
+
+declare class DeclMicAndroidApiServiceImpl {
+    constructor();
+}
+
+declare class DeclVoiceClient {
+}
+
+declare class DeclVoiceServer {
+    constructor(config: DeclServerConfig, server: DeclSocketServerNetworkServiceImpl);
+}
+
+interface ServerConfigBuilder {
+    rate(rate: number): ServerConfigBuilder
+    distance(distance: number): ServerConfigBuilder
+    debug(debug: boolean): ServerConfigBuilder;
+    host(host: string): ServerConfigBuilder
+    port(port: number): ServerConfigBuilder
+
+    build(): DeclServerConfig;
+}
+
+const VoiceClient: typeof DeclVoiceClient = new (WRAP_JAVA("com.reider745.voicechat.network.VoiceClient"))();
+const VoiceServer: typeof DeclVoiceServer = new (WRAP_JAVA("com.reider745.voicechat.network.VoiceServer"))();
+
+const ServerConfig: {builder(): ServerConfigBuilder} = WRAP_JAVA("com.reider745.voicechat.config.ServerConfig");
+
+Voice.setDistance(__config__.getDouble("distance")); */
+
+WRAP_JAVA("com.reider745.voicechat.Voice").refreshConfig(__config__);

@@ -3,6 +3,7 @@ package com.reider745.voicechat.service.impl.mic;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.media.audiofx.AcousticEchoCanceler;
+import com.reider745.voicechat.config.ClientConfig;
 import com.reider745.voicechat.data.Constants;
 import com.reider745.voicechat.data.HandlerSound;
 import com.reider745.voicechat.service.MicService;
@@ -14,10 +15,12 @@ import java.io.IOException;
 
 public class MicAndroidApiServiceImpl implements MicService {
     private final Denoiser denoiser;
-    private final AudioRecord recorder = new AudioRecord(MediaRecorder.AudioSource.VOICE_COMMUNICATION, Constants.RATE, Constants.CHANNEL_IN, Constants.AUDIO_ENCODING, Constants.BUFFER_SIZE);
+    private AudioRecord recorder;
     private HandlerSound listener = (buff, length) -> {};
     private boolean record = false;
     private AcousticEchoCanceler echoCanceler;
+
+    private ClientConfig clientConfig;
 
     public MicAndroidApiServiceImpl() {
         try {
@@ -34,9 +37,11 @@ public class MicAndroidApiServiceImpl implements MicService {
 
     @Override
     public void start() {
-        if(this.record) throw new RuntimeException("Record enabled");
+        if(this.record || recorder == null || clientConfig == null) return;
 
-        final short[] buffer = new short[Constants.BUFFER_SIZE];
+        int bufferSize = clientConfig.getBuffer();
+
+        final short[] buffer = new short[bufferSize];
         Thread thread = new Thread(() -> {
             this.recorder.startRecording();
 
@@ -66,7 +71,7 @@ public class MicAndroidApiServiceImpl implements MicService {
             this.record = true;
 
             while (this.record) {
-                int bytesRead = this.recorder.read(buffer, 0, Constants.BUFFER_SIZE);
+                int bytesRead = this.recorder.read(buffer, 0, bufferSize);
                 if (bytesRead > 0) {
                     this.listener.apply(denoiser.denoise(buffer), bytesRead);
                 } else if (bytesRead == AudioRecord.ERROR_INVALID_OPERATION) {
@@ -93,8 +98,21 @@ public class MicAndroidApiServiceImpl implements MicService {
     }
 
     @Override
+    public void refreshConfig(ClientConfig clientConfig) {
+        boolean isRecording = this.isRecording();
+        this.stop();
+
+        this.clientConfig = clientConfig;
+        this.recorder = new AudioRecord(MediaRecorder.AudioSource.VOICE_COMMUNICATION, clientConfig.getRate(), Constants.CHANNEL_IN, Constants.AUDIO_ENCODING, clientConfig.getBuffer());
+
+        if(isRecording) {
+            this.start();
+        }
+    }
+
+    @Override
     public void stop() {
-        if(!this.record) throw new RuntimeException("Record disabled");
+        if(!this.record) return;
 
         this.record = false;
     }

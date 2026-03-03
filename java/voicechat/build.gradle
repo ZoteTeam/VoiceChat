@@ -15,6 +15,9 @@ repositories {
 dependencies {
 	compileOnly 'org.mozilla:rhino:1.7.14'
     compileOnly(files("lib/android.jar", "lib/innercore-test.jar", "lib/horizon-1.2.jar"))
+
+    compileOnly("org.projectlombok:lombok:1.18.42")
+    annotationProcessor("org.projectlombok:lombok:1.18.42")
 }
 
 sourceSets {
