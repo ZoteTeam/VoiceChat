@@ -20,4 +20,6 @@ public interface VoiceProcessingService {
     void clearGlobalProcessing();
 
     void clearProcessing(String username);
+
+    void clear();
 }

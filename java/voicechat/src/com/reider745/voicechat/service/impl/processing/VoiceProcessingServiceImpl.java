@@ -60,4 +60,10 @@ public class VoiceProcessingServiceImpl implements VoiceProcessingService {
         Java8BackComp.computeIfAbsent(userProcessing, username, (Function<String, List<VoiceProcessing>>) s -> Collections.emptyList())
                 .clear();
     }
+
+    @Override
+    public void clear() {
+        globalProcessing.clear();
+        userProcessing.clear();
+    }
 }

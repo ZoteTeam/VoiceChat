@@ -7,6 +7,8 @@ import android.support.v4.content.ContextCompat;
 import com.reider745.voicechat.config.ServerConfig;
 import com.reider745.voicechat.network.VoiceClient;
 import com.reider745.voicechat.network.VoiceServer;
+import com.reider745.voicechat.processing.VoiceGainProcessing;
+import com.reider745.voicechat.processing.VoiceNoiseReduction;
 import com.reider745.voicechat.service.impl.mic.MicAndroidApiServiceImpl;
 import com.reider745.voicechat.service.impl.speak.SpeakAndroidApiServiceImpl;
 import com.reider745.voicechat.service.network.impl.SocketClientNetworkServiceImpl;
@@ -14,6 +16,7 @@ import com.reider745.voicechat.service.network.impl.SocketServerNetworkServiceIm
 import com.zhekasmirnov.innercore.api.mod.adaptedscript.AdaptedScriptAPI;
 import com.zhekasmirnov.innercore.api.runtime.Callback;
 import com.zhekasmirnov.innercore.mod.build.Config;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.HashMap;
@@ -56,6 +59,16 @@ public class Voice {
             json.put("distance", server.getServerConfig().getDistance());
             json.put("host",  server.getServerConfig().getHost());
             json.put("port", server.getServerConfig().getPort());
+
+            final JSONObject local = new JSONObject();
+
+            local.put("gain", 1f);
+            local.put("noise", true);
+
+            json.put("local", local);
+
+            json.put("players", new JSONObject());
+
             config.checkAndRestore(json);
         } catch (Exception ignore) {}
 
@@ -65,6 +78,29 @@ public class Voice {
                 .host(config.getString("host"))
                 .port(config.getInteger("port"))
                 .build());
+
+        client.getLocalProcessing().clear();
+        client.getServerProcessing().clear();
+
+        float gain = config.getFloat("local.gain");
+        if(gain != 1) {
+            client.getLocalProcessing().addGlobalProcessing(new VoiceGainProcessing(gain));
+        }
+
+        if(config.getBool("local.noise")) {
+            client.getLocalProcessing().addGlobalProcessing(new VoiceNoiseReduction());
+        }
+
+        Object playersObject = config.get("players");
+        if(playersObject instanceof Config) {
+            Config cfg = (Config) playersObject;
+            for(String nickname : cfg.getNames()) {
+                float gainPlayer = cfg.getFloat(nickname);
+                if(gainPlayer != 1) {
+                    client.getServerProcessing().addProcessing(nickname, new VoiceGainProcessing(gainPlayer));
+                }
+            }
+        }
 
         Callback.invokeAPICallback("VoiceModRefresh", config, client, server);
     }
