@@ -65,5 +65,7 @@ public class Voice {
                 .host(config.getString("host"))
                 .port(config.getInteger("port"))
                 .build());
+
+        Callback.invokeAPICallback("VoiceModRefresh", config, client, server);
     }
 }

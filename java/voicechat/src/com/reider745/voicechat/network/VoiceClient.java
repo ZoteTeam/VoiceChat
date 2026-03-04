@@ -2,6 +2,8 @@ package com.reider745.voicechat.network;
 
 import com.reider745.voicechat.service.MicService;
 import com.reider745.voicechat.service.SpeakService;
+import com.reider745.voicechat.service.VoiceProcessingService;
+import com.reider745.voicechat.service.impl.processing.VoiceProcessingServiceImpl;
 import com.reider745.voicechat.service.network.ClientNetworkService;
 import com.zhekasmirnov.innercore.api.mod.util.ScriptableFunctionImpl;
 import com.zhekasmirnov.innercore.api.runtime.Callback;
@@ -16,6 +18,8 @@ public class VoiceClient {
     private MicService micService;
     @Setter
     private SpeakService speakService;
+    @Setter
+    private VoiceProcessingService localProcessing = new VoiceProcessingServiceImpl(), serverProcessing = new VoiceProcessingServiceImpl();
 
     public VoiceClient(ClientNetworkService clientNetworkService, MicService micService, SpeakService speakService) {
         setClientNetworkService(clientNetworkService);
@@ -42,7 +46,7 @@ public class VoiceClient {
 
     public void setClientNetworkService(ClientNetworkService clientNetworkService) {
         clientNetworkService.setHandler((entry) -> {
-            getSpeakService().play(entry.getSound(), entry.getSound().length);
+            getSpeakService().play(serverProcessing.process(entry.getUsername(), entry.getSound()), entry.getSound().length);
         });
 
         clientNetworkService.setRefreshConfigHandler((config) -> {
@@ -55,7 +59,7 @@ public class VoiceClient {
 
     public void setMicService(MicService micService) {
         micService.setListener((buff, length) -> {
-            getClientNetworkService().sendToServer(buff, length);
+            getClientNetworkService().sendToServer(localProcessing.process(null, buff), length);
         });
 
         this.micService = micService;

@@ -9,26 +9,14 @@ import com.reider745.voicechat.data.HandlerSound;
 import com.reider745.voicechat.service.MicService;
 import com.zhekasmirnov.horizon.runtime.logger.Logger;
 import com.zhekasmirnov.innercore.api.log.ICLog;
-import de.maxhenkel.rnnoise4j.Denoiser;
-
-import java.io.IOException;
 
 public class MicAndroidApiServiceImpl implements MicService {
-    private final Denoiser denoiser;
     private AudioRecord recorder;
     private HandlerSound listener = (buff, length) -> {};
     private boolean record = false;
     private AcousticEchoCanceler echoCanceler;
 
     private ClientConfig clientConfig;
-
-    public MicAndroidApiServiceImpl() {
-        try {
-            this.denoiser = new Denoiser();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     @Override
     public void setListener(HandlerSound listener) {
@@ -73,7 +61,7 @@ public class MicAndroidApiServiceImpl implements MicService {
             while (this.record) {
                 int bytesRead = this.recorder.read(buffer, 0, bufferSize);
                 if (bytesRead > 0) {
-                    this.listener.apply(denoiser.denoise(buffer), bytesRead);
+                    this.listener.apply(buffer, bytesRead);
                 } else if (bytesRead == AudioRecord.ERROR_INVALID_OPERATION) {
                     Logger.error("VoiceMod", "ERROR_INVALID_OPERATION: Check recorder state");
                 } else if (bytesRead == AudioRecord.ERROR_BAD_VALUE) {

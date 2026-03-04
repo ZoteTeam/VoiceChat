@@ -7,5 +7,5 @@ import lombok.Getter;
 @Getter
 public class VoiceEntry {
     private final String username;
-    private final byte[] sound;
+    private final short[] sound;
 }

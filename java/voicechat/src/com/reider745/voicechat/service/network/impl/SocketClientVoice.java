@@ -23,7 +23,7 @@ public class SocketClientVoice {
 
     public byte[] handleServer() {
         try {
-            int length = inputStream.readInt();
+            int length = inputStream.readInt() * 2;
             if(length > 0) {
                 byte[] bytes = new byte[length];
                 inputStream.readFully(bytes, 0, length);
@@ -47,13 +47,15 @@ public class SocketClientVoice {
 
             // Ограничение на количество байт которые клиент может принять
             if(length > Short.MAX_VALUE) {
-                inputStream.skipBytes(Short.MAX_VALUE);
+                inputStream.skipBytes(inputStream.available());
                 return null;
             }
 
             if (length > 0){
-                byte[] buff = new byte[length];
-                inputStream.readFully(buff);
+                short[] buff = new short[length];
+                for(short i = 0; i < length; i++){
+                    buff[i] = inputStream.readShort();
+                }
                 return new VoiceEntry(username, buff);
             }
 
@@ -65,7 +67,7 @@ public class SocketClientVoice {
 
     public void sendToClient(String username, byte[] buff, int length) {
         try {
-            outputStream.writeInt(length);
+            outputStream.writeInt(length / 2);
             outputStream.writeUTF(username);
             outputStream.write(buff, 0, length);
             outputStream.flush();
@@ -78,12 +80,9 @@ public class SocketClientVoice {
                 return;
             }
 
-            outputStream.writeInt(length * 2);
-            for(int i = 0; i < length; i++) {
-                final short sample = buff[i];
-
-                outputStream.write((byte) (sample & 0xFF));
-                outputStream.write((byte) ((sample >> 8) & 0xFF));
+            outputStream.writeInt(length);
+            for(short sample : buff) {
+                outputStream.writeShort(sample);
             }
             outputStream.flush();
         } catch (IOException ignored) {}

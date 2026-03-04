@@ -21,7 +21,7 @@ public class SpeakAndroidApiServiceImpl implements SpeakService {
     }
 
     @Override
-    public void play(byte[] buff, int length) {
+    public void play(short[] buff, int length) {
         if(this.track == null || buff == null || buff.length == 0 || length <= 0) return;
         this.track.write(buff, 0, length);
     }
