@@ -59,6 +59,7 @@ public class Voice {
             json.put("distance", server.getServerConfig().getDistance());
             json.put("host",  server.getServerConfig().getHost());
             json.put("port", server.getServerConfig().getPort());
+            json.put("volume", 1);
 
             final JSONObject local = new JSONObject();
 
@@ -89,6 +90,11 @@ public class Voice {
 
         if(config.getBool("local.noise")) {
             client.getLocalProcessing().addGlobalProcessing(new VoiceNoiseReduction());
+        }
+
+        float volume = config.getFloat("volume");
+        if(volume != 1) {
+            client.getServerProcessing().addGlobalProcessing(new VoiceGainProcessing(volume));
         }
 
         Object playersObject = config.get("players");
