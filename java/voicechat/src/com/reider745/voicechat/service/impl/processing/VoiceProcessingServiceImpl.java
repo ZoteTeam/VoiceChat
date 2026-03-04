@@ -40,11 +40,11 @@ public class VoiceProcessingServiceImpl implements VoiceProcessingService {
     @Override
     public short[] process(String username, short[] voice) {
         for (VoiceProcessing processing : globalProcessing) {
-            voice = processing.process(voice);
+            voice = processing.process(username, voice);
         }
 
         for(VoiceProcessing processing : getProcessing(username)) {
-            voice = processing.process(voice);
+            voice = processing.process(username, voice);
         }
 
         return voice;

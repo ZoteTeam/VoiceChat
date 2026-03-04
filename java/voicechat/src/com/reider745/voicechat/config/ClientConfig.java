@@ -12,12 +12,14 @@ public class ClientConfig {
 
     private final String host;
     private final int port;
+    private final int distance;
 
     public ClientConfig(JSONObject config) {
         // from server config
         this.host = config.optString("host", "0.0.0.0");
         this.rate = config.optInt("rate", Constants.RATE_DEFAULT);
         this.port = config.optInt("port", Network.getSingleton().getConfig().getDefaultPort() + 1);
+        this.distance = config.optInt("distance", 0);
     }
 
     public int getBuffer() {
@@ -38,6 +40,7 @@ public class ClientConfig {
             json.put("host", config.getHost());
             json.put("port", config.getPort());
             json.put("rate", config.getRate());
+            json.put("distance", config.getDistance());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

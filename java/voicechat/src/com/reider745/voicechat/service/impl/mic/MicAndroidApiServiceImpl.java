@@ -31,6 +31,8 @@ public class MicAndroidApiServiceImpl implements MicService {
 
         final short[] buffer = new short[bufferSize];
         Thread thread = new Thread(() -> {
+            this.record = true;
+
             this.recorder.startRecording();
 
             try {
@@ -55,8 +57,6 @@ public class MicAndroidApiServiceImpl implements MicService {
             } catch (Throwable t) {
                 Logger.error("VoiceMod", ICLog.getStackTrace(t));
             }
-
-            this.record = true;
 
             while (this.record) {
                 int bytesRead = this.recorder.read(buffer, 0, bufferSize);

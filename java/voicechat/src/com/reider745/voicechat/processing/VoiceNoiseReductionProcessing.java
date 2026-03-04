@@ -4,10 +4,10 @@ import de.maxhenkel.rnnoise4j.Denoiser;
 
 import java.io.IOException;
 
-public class VoiceNoiseReduction implements VoiceProcessing {
+public class VoiceNoiseReductionProcessing implements VoiceProcessing {
     private final Denoiser denoiser;
 
-    public VoiceNoiseReduction() {
+    public VoiceNoiseReductionProcessing() {
         try {
             this.denoiser = new Denoiser();
         } catch (IOException e) {
@@ -16,7 +16,7 @@ public class VoiceNoiseReduction implements VoiceProcessing {
     }
 
     @Override
-    public short[] process(short[] voice) {
+    public short[] process(String username, short[] voice) {
         return denoiser.denoise(voice);
     }
 }

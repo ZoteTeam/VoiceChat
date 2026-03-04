@@ -103,6 +103,11 @@ public class SocketClientNetworkServiceImpl implements ClientNetworkService {
     }
 
     @Override
+    public boolean isConnected() {
+        return clientVoice == null;
+    }
+
+    @Override
     public void stop() {
         if(clientVoice == null) return;
         clientVoice.close();

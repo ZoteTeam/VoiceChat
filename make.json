@@ -18,7 +18,12 @@
 	"declarations": [
 		"declarations/android.d.ts"
 	],
-	"resources": [],
+	"resources": [
+		{
+			"path": "assets/gui",
+			"type": "gui"
+		}
+	],
 	"sources": [
 		{
 			"source": "launcher.js",

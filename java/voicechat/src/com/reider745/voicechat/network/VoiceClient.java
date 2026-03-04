@@ -1,5 +1,6 @@
 package com.reider745.voicechat.network;
 
+import com.reider745.voicechat.config.ClientConfig;
 import com.reider745.voicechat.service.MicService;
 import com.reider745.voicechat.service.SpeakService;
 import com.reider745.voicechat.service.VoiceProcessingService;
@@ -20,6 +21,8 @@ public class VoiceClient {
     private SpeakService speakService;
     @Setter
     private VoiceProcessingService localProcessing = new VoiceProcessingServiceImpl(), serverProcessing = new VoiceProcessingServiceImpl();
+
+    private ClientConfig clientConfig;
 
     public VoiceClient(ClientNetworkService clientNetworkService, MicService micService, SpeakService speakService) {
         setClientNetworkService(clientNetworkService);
@@ -50,6 +53,8 @@ public class VoiceClient {
         });
 
         clientNetworkService.setRefreshConfigHandler((config) -> {
+            clientConfig = config;
+
             getMicService().refreshConfig(config);
             getSpeakService().refreshConfig(config);
         });

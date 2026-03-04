@@ -5,10 +5,12 @@ import android.content.pm.PackageManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import com.reider745.voicechat.config.ServerConfig;
+import com.reider745.voicechat.network.LocalPlayerList;
 import com.reider745.voicechat.network.VoiceClient;
 import com.reider745.voicechat.network.VoiceServer;
 import com.reider745.voicechat.processing.VoiceGainProcessing;
-import com.reider745.voicechat.processing.VoiceNoiseReduction;
+import com.reider745.voicechat.processing.VoiceJammingDistanceProcessing;
+import com.reider745.voicechat.processing.VoiceNoiseReductionProcessing;
 import com.reider745.voicechat.service.impl.mic.MicAndroidApiServiceImpl;
 import com.reider745.voicechat.service.impl.speak.SpeakAndroidApiServiceImpl;
 import com.reider745.voicechat.service.network.impl.SocketClientNetworkServiceImpl;
@@ -16,7 +18,7 @@ import com.reider745.voicechat.service.network.impl.SocketServerNetworkServiceIm
 import com.zhekasmirnov.innercore.api.mod.adaptedscript.AdaptedScriptAPI;
 import com.zhekasmirnov.innercore.api.runtime.Callback;
 import com.zhekasmirnov.innercore.mod.build.Config;
-import org.json.JSONArray;
+import lombok.Getter;
 import org.json.JSONObject;
 
 import java.util.HashMap;
@@ -24,7 +26,9 @@ import java.util.HashMap;
 public class Voice {
     public static String dirMod;
 
+    @Getter
     private static VoiceClient client;
+    @Getter
     private static VoiceServer server;
 
     public static void boot(HashMap<?, ?> options) {
@@ -50,6 +54,8 @@ public class Voice {
 
         client = new VoiceClient(new SocketClientNetworkServiceImpl(), new MicAndroidApiServiceImpl(), new SpeakAndroidApiServiceImpl());
         server = new VoiceServer(ServerConfig.builder().build(), new SocketServerNetworkServiceImpl());
+
+        LocalPlayerList.init();
     }
 
     public static void refreshConfig(Config config) {
@@ -89,13 +95,15 @@ public class Voice {
         }
 
         if(config.getBool("local.noise")) {
-            client.getLocalProcessing().addGlobalProcessing(new VoiceNoiseReduction());
+            client.getLocalProcessing().addGlobalProcessing(new VoiceNoiseReductionProcessing());
         }
 
         float volume = config.getFloat("volume");
         if(volume != 1) {
             client.getServerProcessing().addGlobalProcessing(new VoiceGainProcessing(volume));
         }
+
+        client.getServerProcessing().addGlobalProcessing(new VoiceJammingDistanceProcessing());
 
         Object playersObject = config.get("players");
         if(playersObject instanceof Config) {

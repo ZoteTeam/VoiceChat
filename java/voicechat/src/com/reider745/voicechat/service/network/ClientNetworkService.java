@@ -12,5 +12,7 @@ public interface ClientNetworkService {
 
     void setRefreshConfigHandler(Consumer<ClientConfig> handler);
 
+    boolean isConnected();
+
     void stop();
 }
