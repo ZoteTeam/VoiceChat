@@ -1,5 +1,6 @@
 package com.reider745.voicechat.service.impl.processing;
 
+import com.reider745.voicechat.data.VoiceProcessingContext;
 import com.reider745.voicechat.processing.VoiceProcessing;
 import com.reider745.voicechat.service.VoiceProcessingService;
 import com.zhekasmirnov.apparatus.util.Java8BackComp;
@@ -38,16 +39,26 @@ public class VoiceProcessingServiceImpl implements VoiceProcessingService {
     }
 
     @Override
-    public short[] process(String username, short[] voice) {
+    public void process(VoiceProcessingContext context) {
+        final float originalGain = context.getGain();
+
         for (VoiceProcessing processing : globalProcessing) {
-            voice = processing.process(username, voice);
+            processing.process(context);
         }
 
-        for(VoiceProcessing processing : getProcessing(username)) {
-            voice = processing.process(username, voice);
+        for(VoiceProcessing processing : getProcessing(context.getUsername())) {
+            processing.process(context);
         }
 
-        return voice;
+        final float gain = context.getGain();
+
+        if(originalGain != context.getGain()) {
+            final short[] voice = context.getVoice();
+
+            for(int i = 0; i < context.getLength(); i++) {
+                voice[i] = (short) Math.min(Math.max(voice[i] * gain, Short.MIN_VALUE), Short.MAX_VALUE);
+            }
+        }
     }
 
     @Override

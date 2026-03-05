@@ -1,5 +1,6 @@
 package com.reider745.voicechat.processing;
 
+import com.reider745.voicechat.data.VoiceProcessingContext;
 import de.maxhenkel.rnnoise4j.Denoiser;
 
 import java.io.IOException;
@@ -16,7 +17,9 @@ public class VoiceNoiseReductionProcessing implements VoiceProcessing {
     }
 
     @Override
-    public short[] process(String username, short[] voice) {
-        return denoiser.denoise(voice);
+    public void process(VoiceProcessingContext context) {
+        if(context.isValid()) {
+            context.setVoice(denoiser.denoise(context.getVoice()));
+        }
     }
 }

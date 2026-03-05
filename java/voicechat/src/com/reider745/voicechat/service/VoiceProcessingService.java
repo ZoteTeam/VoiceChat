@@ -1,5 +1,6 @@
 package com.reider745.voicechat.service;
 
+import com.reider745.voicechat.data.VoiceProcessingContext;
 import com.reider745.voicechat.processing.VoiceProcessing;
 
 import java.util.List;
@@ -15,7 +16,7 @@ public interface VoiceProcessingService {
 
     List<String> getUsernames();
 
-    short[] process(String username, short[] voice);
+    void process(VoiceProcessingContext context);
 
     void clearGlobalProcessing();
 

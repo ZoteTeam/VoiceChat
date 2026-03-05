@@ -1,5 +1,7 @@
 package com.reider745.voicechat.processing;
 
+import com.reider745.voicechat.data.VoiceProcessingContext;
+
 public interface VoiceProcessing {
-    short[] process(String username, short[] voice);
+    void process(VoiceProcessingContext context);
 }

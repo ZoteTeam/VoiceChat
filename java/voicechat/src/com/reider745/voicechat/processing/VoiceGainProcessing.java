@@ -1,5 +1,7 @@
 package com.reider745.voicechat.processing;
 
+import com.reider745.voicechat.data.VoiceProcessingContext;
+
 public class VoiceGainProcessing implements VoiceProcessing {
     private final float gain;
 
@@ -8,10 +10,7 @@ public class VoiceGainProcessing implements VoiceProcessing {
     }
 
     @Override
-    public short[] process(String username, short[] voice) {
-        for(short i = 0; i < voice.length; i++) {
-            voice[i] = (short) Math.min(Math.max(voice[i] * gain, Short.MIN_VALUE), Short.MAX_VALUE);
-        }
-        return voice;
+    public void process(VoiceProcessingContext context) {
+        context.setGain(context.getGain() * gain);
     }
 }

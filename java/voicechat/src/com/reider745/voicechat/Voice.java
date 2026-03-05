@@ -8,9 +8,7 @@ import com.reider745.voicechat.config.ServerConfig;
 import com.reider745.voicechat.network.LocalPlayerList;
 import com.reider745.voicechat.network.VoiceClient;
 import com.reider745.voicechat.network.VoiceServer;
-import com.reider745.voicechat.processing.VoiceGainProcessing;
-import com.reider745.voicechat.processing.VoiceJammingDistanceProcessing;
-import com.reider745.voicechat.processing.VoiceNoiseReductionProcessing;
+import com.reider745.voicechat.processing.*;
 import com.reider745.voicechat.service.impl.mic.MicAndroidApiServiceImpl;
 import com.reider745.voicechat.service.impl.speak.SpeakAndroidApiServiceImpl;
 import com.reider745.voicechat.service.network.impl.SocketClientNetworkServiceImpl;
@@ -52,7 +50,7 @@ public class Voice {
             }
         }
 
-        client = new VoiceClient(new SocketClientNetworkServiceImpl(), new MicAndroidApiServiceImpl(), new SpeakAndroidApiServiceImpl());
+        client = new VoiceClient(new SocketClientNetworkServiceImpl(), new MicAndroidApiServiceImpl(), (uid) -> new SpeakAndroidApiServiceImpl());
         server = new VoiceServer(ServerConfig.builder().build(), new SocketServerNetworkServiceImpl());
 
         LocalPlayerList.init();
@@ -66,11 +64,13 @@ public class Voice {
             json.put("host",  server.getServerConfig().getHost());
             json.put("port", server.getServerConfig().getPort());
             json.put("volume", 1);
+            json.put("voice3d", true);
 
             final JSONObject local = new JSONObject();
 
             local.put("gain", 1f);
             local.put("noise", true);
+            local.put("threshold", 2);
 
             json.put("local", local);
 
@@ -89,30 +89,28 @@ public class Voice {
         client.getLocalProcessing().clear();
         client.getServerProcessing().clear();
 
-        float gain = config.getFloat("local.gain");
-        if(gain != 1) {
-            client.getLocalProcessing().addGlobalProcessing(new VoiceGainProcessing(gain));
-        }
+        client.getLocalProcessing().addGlobalProcessing(new VoiceThresholdProcessing(config.getDouble("local.threshold")));
+        client.getLocalProcessing().addGlobalProcessing(new VoiceGainProcessing(config.getFloat("local.gain")));
 
         if(config.getBool("local.noise")) {
             client.getLocalProcessing().addGlobalProcessing(new VoiceNoiseReductionProcessing());
         }
 
-        float volume = config.getFloat("volume");
-        if(volume != 1) {
-            client.getServerProcessing().addGlobalProcessing(new VoiceGainProcessing(volume));
+        client.getServerProcessing().addGlobalProcessing(new VoiceGainProcessing(config.getFloat("volume")));
+
+        if(config.getBool("voice3d")) {
+            client.getServerProcessing().addGlobalProcessing(new Voice3dProcessing());
+        } else {
+            client.getServerProcessing().addGlobalProcessing(new VoiceJammingDistanceProcessing());
         }
 
-        client.getServerProcessing().addGlobalProcessing(new VoiceJammingDistanceProcessing());
-
         Object playersObject = config.get("players");
+
         if(playersObject instanceof Config) {
             Config cfg = (Config) playersObject;
+
             for(String nickname : cfg.getNames()) {
-                float gainPlayer = cfg.getFloat(nickname);
-                if(gainPlayer != 1) {
-                    client.getServerProcessing().addProcessing(nickname, new VoiceGainProcessing(gainPlayer));
-                }
+                client.getServerProcessing().addProcessing(nickname, new VoiceGainProcessing(cfg.getFloat(nickname)));
             }
         }
 

@@ -1,6 +1,7 @@
 package com.reider745.voicechat.network;
 
 import com.reider745.voicechat.config.ClientConfig;
+import com.reider745.voicechat.data.VoiceProcessingContext;
 import com.reider745.voicechat.service.MicService;
 import com.reider745.voicechat.service.SpeakService;
 import com.reider745.voicechat.service.VoiceProcessingService;
@@ -13,21 +14,29 @@ import lombok.Setter;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+
 @Getter
 public class VoiceClient {
+    private final Map<Long, SpeakService> speakServices = new ConcurrentHashMap<>();
+
     private ClientNetworkService clientNetworkService;
     private MicService micService;
-    @Setter
-    private SpeakService speakService;
     @Setter
     private VoiceProcessingService localProcessing = new VoiceProcessingServiceImpl(), serverProcessing = new VoiceProcessingServiceImpl();
 
     private ClientConfig clientConfig;
 
-    public VoiceClient(ClientNetworkService clientNetworkService, MicService micService, SpeakService speakService) {
+    public VoiceClient(ClientNetworkService clientNetworkService, MicService micService, Function<Long, SpeakService> speakService) {
         setClientNetworkService(clientNetworkService);
         setMicService(micService);
-        setSpeakService(speakService);
+
+        LocalPlayerList.addConnection((uid) -> {
+            speakServices.put(uid, speakService.apply(uid));
+        });
 
         Callback.addCallback("LevelDisplayed", new ScriptableFunctionImpl() {
             @Override
@@ -49,14 +58,22 @@ public class VoiceClient {
 
     public void setClientNetworkService(ClientNetworkService clientNetworkService) {
         clientNetworkService.setHandler((entry) -> {
-            getSpeakService().play(serverProcessing.process(entry.getUsername(), entry.getSound()), entry.getSound().length);
+            final VoiceProcessingContext context = new VoiceProcessingContext(entry.getUsername(), entry.getSound());
+            serverProcessing.process(context);
+
+            final SpeakService speakService = this.speakServices.get(context.getPlayerUid());
+            if (speakService != null) {
+                speakService.play(context.getVoice(), context.getLength(), context.getLeftGain(), context.getRightGain());
+            }
         });
 
         clientNetworkService.setRefreshConfigHandler((config) -> {
             clientConfig = config;
 
             getMicService().refreshConfig(config);
-            getSpeakService().refreshConfig(config);
+            speakServices.forEach((uid, speakService) -> {
+                speakService.refreshConfig(config);
+            });
         });
 
         this.clientNetworkService = clientNetworkService;
@@ -64,7 +81,11 @@ public class VoiceClient {
 
     public void setMicService(MicService micService) {
         micService.setListener((buff, length) -> {
-            getClientNetworkService().sendToServer(localProcessing.process(null, buff), length);
+            final VoiceProcessingContext context = new VoiceProcessingContext(null, buff, length);
+            localProcessing.process(context);
+            if(context.isValid()) {
+                getClientNetworkService().sendToServer(context.getVoice(), context.getLength());
+            }
         });
 
         this.micService = micService;

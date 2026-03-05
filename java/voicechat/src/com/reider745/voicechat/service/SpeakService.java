@@ -5,5 +5,5 @@ import com.reider745.voicechat.config.ClientConfig;
 public interface SpeakService {
     void refreshConfig(ClientConfig clientConfig);
 
-    void play(short[] buff, int length);
+    void play(short[] buff, int length, float leftGain, float rightGain);
 }
