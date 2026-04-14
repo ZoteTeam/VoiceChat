@@ -38,8 +38,15 @@ public class Voice {
             throw new IllegalArgumentException("Missing required parameter 'dirMod'");
         }
 
-        if (AdaptedScriptAPI.isDedicatedServer())
+
+
+        if (AdaptedScriptAPI.isDedicatedServer()) {
+            client = new VoiceClient(new SocketClientNetworkServiceImpl(), new MicAndroidApiServiceImpl(), (uid) -> new SpeakAndroidApiServiceImpl());
+            server = new VoiceServer(ServerConfig.builder().build(), new SocketServerNetworkServiceImpl());
+
+            LocalPlayerList.init();
             return;
+        }
 
         while (ContextCompat.checkSelfPermission(AdaptedScriptAPI.UI.getContext(), Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(AdaptedScriptAPI.UI.getContext(), new String[]{Manifest.permission.RECORD_AUDIO}, 200);

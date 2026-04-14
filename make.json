@@ -15,9 +15,7 @@
 	"java": {
 		"configurable": true
 	},
-	"declarations": [
-		"declarations/android.d.ts"
-	],
+	"declarations": [],
 	"resources": [
 		{
 			"path": "assets/gui",
@@ -58,6 +56,7 @@
 				"options": ["-std=c99", "-DARM64=1"]
 			}
 		}
+		
 	},
 	"additional": [
 		{
