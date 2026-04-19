@@ -26,7 +26,7 @@ public class VoiceServer {
         Callback.addCallback("ServerLevelPreLoaded", new ScriptableFunctionImpl() {
             @Override
             public Object call(Context context, Scriptable scriptable, Scriptable scriptable1, Object[] objects) {
-                getServerNetworkService().start(serverConfig);
+                getServerNetworkService().start(VoiceServer.this.getServerConfig());
                 return null;
             }
         }, 0);
