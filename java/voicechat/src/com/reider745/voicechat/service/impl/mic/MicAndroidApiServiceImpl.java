@@ -33,7 +33,9 @@ public class MicAndroidApiServiceImpl implements MicService {
         Thread thread = new Thread(() -> {
             this.record = true;
 
-            this.recorder.startRecording();
+            AudioRecord recorder = this.recorder;
+
+            recorder.startRecording();
 
             try {
                 if (AcousticEchoCanceler.isAvailable()) {
@@ -57,7 +59,7 @@ public class MicAndroidApiServiceImpl implements MicService {
             }
 
             while (this.record) {
-                int bytesRead = this.recorder.read(buffer, 0, bufferSize);
+                int bytesRead = recorder.read(buffer, 0, bufferSize);
                 if (bytesRead > 0) {
                     this.listener.apply(buffer, bytesRead);
                 } else if (bytesRead == AudioRecord.ERROR_INVALID_OPERATION) {
@@ -77,7 +79,7 @@ public class MicAndroidApiServiceImpl implements MicService {
                 echoCanceler = null;
             }
 
-            this.recorder.stop();
+            recorder.stop();
         });
         thread.setName("mic");
         thread.start();
