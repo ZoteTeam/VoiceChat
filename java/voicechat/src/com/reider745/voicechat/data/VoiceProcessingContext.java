@@ -1,6 +1,7 @@
 package com.reider745.voicechat.data;
 
 import com.reider745.voicechat.network.LocalPlayerList;
+import com.zhekasmirnov.horizon.runtime.logger.Logger;
 import com.zhekasmirnov.innercore.api.NativeAPI;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,6 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class VoiceProcessingContext {
+    private final long playerUid;
     private final String username;
 
     private float gain = 1;
@@ -17,28 +19,18 @@ public class VoiceProcessingContext {
     private short[] voice;
     private int length;
 
-    public VoiceProcessingContext(String username, short[] voice) {
+    public VoiceProcessingContext(long playerUid, String username, short[] voice) {
+        this.playerUid = playerUid;
         this.username = username;
         this.voice = voice;
         this.length = voice.length;
     }
 
-    public VoiceProcessingContext(String username, short[] voice, int length) {
+    public VoiceProcessingContext(long playerUid, String username, short[] voice, int length) {
+        this.playerUid = playerUid;
         this.username = username;
         this.voice = voice;
         this.length = length;
-    }
-
-    public long getPlayerUid() {
-        if(this.username == null) return 0;
-
-        for(long ent : LocalPlayerList.getPlayers()) {
-            if(NativeAPI.getNameTag(ent).equals(this.username)) {
-                return ent;
-            }
-        }
-
-        return 0;
     }
 
     public void setVoice(short[] voice) {

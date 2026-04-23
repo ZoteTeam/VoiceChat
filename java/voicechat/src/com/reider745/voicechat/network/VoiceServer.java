@@ -26,7 +26,7 @@ public class VoiceServer {
         Callback.addCallback("ServerLevelPreLoaded", new ScriptableFunctionImpl() {
             @Override
             public Object call(Context context, Scriptable scriptable, Scriptable scriptable1, Object[] objects) {
-                getServerNetworkService().start(VoiceServer.this.getServerConfig());
+                getServerNetworkService().start(getServerConfig());
                 return null;
             }
         }, 0);
@@ -42,12 +42,13 @@ public class VoiceServer {
 
     public void setServerNetworkService(ServerNetworkService serverNetworkService) {
         serverNetworkService.setHandler(((client, buff, length) -> {
-            for(ConnectedClient speakClient : Network.getSingleton().getServer().getConnectedClients()) {
-                float[] pos1 = new float[3];
-                float[] pos2 = new float[3];
+            float[] pos1 = new float[3];
+            float[] pos2 = new float[3];
 
+            NativeAPI.getPosition(client.getPlayerUid(), pos2);
+
+            for(ConnectedClient speakClient : Network.getSingleton().getServer().getConnectedClients()) {
                 NativeAPI.getPosition(speakClient.getPlayerUid(), pos1);
-                NativeAPI.getPosition(client.getPlayerUid(), pos2);
 
                 if((serverConfig.isDebug() || speakClient != client) && Math.sqrt(Math.pow(pos1[0] - pos2[0], 2) + Math.pow(pos1[1] - pos2[1], 2) + Math.pow(pos1[2] - pos2[2], 2)) <= this.serverConfig.getDistance()) {
                     serverNetworkService.sendToClient(speakClient, buff, length);

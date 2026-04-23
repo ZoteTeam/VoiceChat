@@ -23,6 +23,10 @@ public class SocketClientVoice {
 
     public byte[] handleServer() {
         try {
+            if(inputStream.available() <= 0) {
+                return EMPTY;
+            }
+
             int length = inputStream.readInt() * 2;
             if(length > 0) {
                 byte[] bytes = new byte[length];

@@ -1,14 +1,18 @@
 package com.reider745.voicechat.network;
 
 import com.zhekasmirnov.apparatus.multiplayer.Network;
+import com.zhekasmirnov.innercore.api.NativeAPI;
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 public class LocalPlayerList {
     private static final byte[] EMPTY = new byte[0];
-    private static final Set<Long> PLAYERS = new HashSet<>();
+
+    private static final Map<Long, String> PLAYERS = new ConcurrentHashMap<>();
 
     private static final List<Consumer<Long>> CONNECTIONS = new ArrayList<>();
     private static final List<Consumer<Long>> DISCONNECTIONS = new ArrayList<>();
@@ -18,13 +22,15 @@ public class LocalPlayerList {
             try {
                 final JSONArray array = new JSONArray(data.toString());
 
-                PLAYERS.forEach(uid -> DISCONNECTIONS.forEach(func -> func.accept(uid)));
+                PLAYERS.forEach((uid, username) -> DISCONNECTIONS.forEach(func -> func.accept(uid)));
                 PLAYERS.clear();
 
                 for (int i = 0; i < array.length(); i++) {
-                    long uid = array.getLong(i);
-                    CONNECTIONS.forEach(func -> func.accept(uid));
-                    PLAYERS.add(uid);
+                    JSONObject player = array.getJSONObject(i);
+                    long playerUid = player.getLong("uid");
+
+                    CONNECTIONS.forEach(func -> func.accept(playerUid));
+                    PLAYERS.put(playerUid, player.getString("username"));
                 }
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -34,7 +40,7 @@ public class LocalPlayerList {
         Network.getSingleton().addClientPacket("voice.player_list.add", (data, meta, aClass) -> {
             long uid = Long.parseLong(meta);
             CONNECTIONS.forEach(func -> func.accept(uid));
-            PLAYERS.add(uid);
+            PLAYERS.put(uid, data.toString());
         });
 
         Network.getSingleton().addClientPacket("voice.player_list.remove", (data, meta, aClass) -> {
@@ -46,12 +52,21 @@ public class LocalPlayerList {
         Network.getSingleton().getServer().addOnClientConnectedListener(client -> {
             final JSONArray playersObject = new JSONArray();
 
-            Network.getSingleton().getServer().getConnectedPlayers().forEach(playersObject::put);
+            Network.getSingleton().getServer().getConnectedPlayers().forEach(uId -> {
+                try {
+                    final JSONObject playerObject = new JSONObject();
+
+                    playerObject.put("uid", uId);
+                    playerObject.put("username", NativeAPI.getNameTag(uId));
+
+                    playersObject.put(playerObject);
+                } catch (Exception ignore) {}
+            });
 
             client.send("voice.player_list.sync", playersObject.toString());
 
             Network.getSingleton().getServer().getConnectedClients().forEach(connectedClient -> {
-               connectedClient.send("voice.player_list.add#" + client.getPlayerUid(), EMPTY);
+               connectedClient.send("voice.player_list.add#" + client.getPlayerUid(), NativeAPI.getNameTag(client.getPlayerUid()));
             });
         });
 
@@ -64,8 +79,18 @@ public class LocalPlayerList {
 
     public static void init() {}
 
-    public static List<Long> getPlayers() {
-        return new ArrayList<>(PLAYERS);
+    public static Map<Long, String> getPlayers() {
+        return new HashMap<>(PLAYERS);
+    }
+
+    public static long getPlayerUid(String username) {
+        for(Map.Entry<Long, String> entry : PLAYERS.entrySet()) {
+            if(entry.getValue().equals(username)) {
+                return entry.getKey();
+            }
+        }
+
+        return 0;
     }
 
     public static void addConnection(Consumer<Long> connection) {

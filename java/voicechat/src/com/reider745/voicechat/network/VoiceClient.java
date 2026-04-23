@@ -14,7 +14,6 @@ import lombok.Setter;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -58,7 +57,7 @@ public class VoiceClient {
 
     public void setClientNetworkService(ClientNetworkService clientNetworkService) {
         clientNetworkService.setHandler((entry) -> {
-            final VoiceProcessingContext context = new VoiceProcessingContext(entry.getUsername(), entry.getSound());
+            final VoiceProcessingContext context = new VoiceProcessingContext(LocalPlayerList.getPlayerUid(entry.getUsername()), entry.getUsername(), entry.getSound());
             serverProcessing.process(context);
 
             final SpeakService speakService = this.speakServices.get(context.getPlayerUid());
@@ -81,7 +80,7 @@ public class VoiceClient {
 
     public void setMicService(MicService micService) {
         micService.setListener((buff, length) -> {
-            final VoiceProcessingContext context = new VoiceProcessingContext(null, buff, length);
+            final VoiceProcessingContext context = new VoiceProcessingContext(0, null, buff, length);
             localProcessing.process(context);
             if(context.isValid()) {
                 getClientNetworkService().sendToServer(context.getVoice(), context.getLength());

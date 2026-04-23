@@ -96,6 +96,7 @@ public class SocketServerNetworkServiceImpl implements ServerNetworkService {
                             });
                         }
                     } catch (IOException e) {
+                        if(this.serverSocket == null || serverSocket.isClosed()) return;
                         ICLog.e("VoiceMod", "connection voice error", e);
                     }
                 }
@@ -112,7 +113,11 @@ public class SocketServerNetworkServiceImpl implements ServerNetworkService {
                         }
                     });
 
-                    Thread.yield();
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
 
             });
