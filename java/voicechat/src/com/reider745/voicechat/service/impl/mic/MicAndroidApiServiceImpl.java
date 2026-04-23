@@ -36,23 +36,21 @@ public class MicAndroidApiServiceImpl implements MicService {
             this.recorder.startRecording();
 
             try {
-                if (!AcousticEchoCanceler.isAvailable()) {
-                    Logger.error("VoiceMod", "Acoustic Echo Canceler is not available on this device.");
-                    return;
-                }
-
-                int audioSessionId = recorder.getAudioSessionId();
-                if (audioSessionId == 0) {
-                    Logger.error("VoiceMod", "Invalid audio session ID for AEC.");
-                    return;
-                }
-
-                echoCanceler = AcousticEchoCanceler.create(audioSessionId);
-                if (echoCanceler != null) {
-                    echoCanceler.setEnabled(true);
-                    Logger.debug("VoiceMod", "Acoustic Echo Canceler enabled for session: " + audioSessionId);
+                if (AcousticEchoCanceler.isAvailable()) {
+                    int audioSessionId = recorder.getAudioSessionId();
+                    if (audioSessionId != 0) {
+                        echoCanceler = AcousticEchoCanceler.create(audioSessionId);
+                        if (echoCanceler != null) {
+                            echoCanceler.setEnabled(true);
+                            Logger.debug("VoiceMod", "Acoustic Echo Canceler enabled for session: " + audioSessionId);
+                        } else {
+                            Logger.error("VoiceMod", "Failed to create Acoustic Echo Canceler.");
+                        }
+                    } else {
+                        Logger.error("VoiceMod", "Invalid audio session ID for AEC.");
+                    }
                 } else {
-                    Logger.error("VoiceMod", "Failed to create Acoustic Echo Canceler.");
+                    Logger.error("VoiceMod", "Acoustic Echo Canceler is not available on this device.");
                 }
             } catch (Throwable t) {
                 Logger.error("VoiceMod", ICLog.getStackTrace(t));
